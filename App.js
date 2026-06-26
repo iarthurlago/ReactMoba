@@ -1,21 +1,41 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 
 export default function App() {
-  const [leitura, setleitura] = useState({x: 0, y: 0, z: 0})
+  const [leitura, setleitura] = useState({ x: 0, y: 0, z: 0 });
+  const [ativo, setativo] = useState(true);
 
   useEffect(() => {
+    let inscricao;
+    if (ativo) {
     // define quantos milissegundos entre cada leitura
     // 100ms = 10 leituras por segundo - fluido e econômico para bateria
-    Accelerometer.setUpdateInterval(50)
-    // inscreve: o sensor chama setLeitura toda vez que o valor muda
-    const inscricao = Accelerometer.addListener(setleitura) //constroi uma ponte entre voce e o componente de comunicaçao entre voce e...
-    // cleanup: cancela a inscrição quando o componente sai da tela
-    // sem isso o listener continua rodando mesmo invicível
-    return inscricao.remove()
-  })
+      Accelerometer.setUpdateInterval(50);
+      inscricao = Accelerometer.addListener((dados) => {
+        setleitura(dados);
+      });
+    }
+
+    return () => {
+      if (inscricao) {
+        inscricao.remove();
+      }
+    };
+  }, [ativo]);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.texto}>Eixos</Text>
+      <Text>{`x: ${leitura.x.toFixed(2)} | y: ${leitura.y.toFixed(2)} | z: ${leitura.z.toFixed(2)}`}</Text>
+      <TouchableOpacity onPress={() => setativo((valor) => !valor)}>
+        <Text>{ativo ? 'Parar' : 'Iniciar'}</Text>
+      </TouchableOpacity>
+      <StatusBar style="auto" />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -25,7 +45,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   texto: {
-    fontSize: 50
-  }
+    fontSize: 50,
+  },
 });
-}
